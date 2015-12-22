@@ -14,13 +14,23 @@ musicExtensions = ["mp3","ogg","m4a","wav","flac","wma"]
 addRandomPrep :: MonadIO m => FilePath -> m FilePath
 addRandomPrep fp = do
     rs <- liftIO $ replicateM 5 (getRandomR ('a','z'))
-    return $ directory fp </> decodeString (rs <> "_" <> encodeString (filename fp))
+    return $ replaceExtension (directory fp 
+        </> "new" </> decodeString (rs <> "_" <> encodeString (filename fp))) "mp3"
         
 musicPattern ::  Pattern Text
 musicPattern = choice $ 
     map (suffix . text . mappend "." ) musicExtensions
 
-isRandomPref :: Pattern Text
-isRandomPref = mappend musicPattern $ T.pack <$> prefix ((count 5 lower) <> (pure <$> char '_')) 
+main = sh run
 
-main = putStrLn "Not doen yet"
+convert :: MonadIO m => (FilePath, FilePath) -> m ExitCode
+convert (x,y) = 
+    proc "ffmpeg" ["-i", format fp x, "-ac", "2", "-ab", "192k", "-vn", "-ar", 
+        "44100", "-f" ,"mp3", format fp y] empty
+
+run :: Shell ExitCode
+run = do
+    mktree "new"
+    fs <- pwd >>= find musicPattern
+    fs' <- addRandomPrep fs
+    convert (fs, fs')
