@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Turtle
+import Data.List hiding (find)
 import qualified Data.Text as T
 import Filesystem.Path.CurrentOS hiding (empty)
 import Control.Applicative
@@ -9,7 +10,7 @@ import Control.Monad
 import Prelude hiding (FilePath)
 
 musicExtensions :: [Text]
-musicExtensions = ["mp3","ogg","m4a","wav","flac","wma"]
+musicExtensions = ["mp3","ogg","m4a","wav","flac","wma","opus"]
 
 addRandomPrep :: MonadIO m => FilePath -> m FilePath
 addRandomPrep fp = do
@@ -31,6 +32,8 @@ convert (x,y) =
 run :: Shell ExitCode
 run = do
     mktree "new"
+    allFs <- pwd
     fs <- pwd >>= find musicPattern
+
     fs' <- addRandomPrep fs
     convert (fs, fs')
